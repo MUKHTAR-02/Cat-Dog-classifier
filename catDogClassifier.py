@@ -19,6 +19,11 @@ for category in categories:
 
     folder = os.path.join("dataset", category)
 
+    # Check if folder exists
+    if not os.path.exists(folder):
+        print(f"Error: Folder '{folder}' not found.")
+        continue
+
     label = categories.index(category)
 
     for image_name in os.listdir(folder):
@@ -27,13 +32,14 @@ for category in categories:
 
         image = cv2.imread(image_path)
 
+        # Skip invalid files
         if image is None:
             continue
 
         # Resize image
         image = cv2.resize(image, (64, 64))
 
-        # Convert image into one long vector
+        # Flatten image into a 1D vector
         image = image.flatten()
 
         data.append(image)
@@ -43,6 +49,11 @@ data = np.array(data)
 labels = np.array(labels)
 
 print("Total Images :", len(data))
+
+# Stop if dataset is empty
+if len(data) == 0:
+    print("No images found in dataset.")
+    exit()
 
 # -----------------------------
 # Step 2: Split Dataset
@@ -62,7 +73,10 @@ print("Testing Images :", len(X_test))
 # Step 3: Train Model
 # -----------------------------
 
-model = LogisticRegression(max_iter=1000)
+model = LogisticRegression(
+    max_iter=5000,
+    solver="lbfgs"
+)
 
 model.fit(X_train, y_train)
 
@@ -76,25 +90,44 @@ predictions = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, predictions)
 
-print("\nAccuracy :", round(accuracy * 100, 2), "%")
+print(f"\nAccuracy : {accuracy * 100:.2f}%")
 
 # -----------------------------
-# Step 5: Predict New Image
+# Step 5: Predict Images from test-imgs Folder
 # -----------------------------
 
-test_image = cv2.imread("test.jpg")
+test_folder = "test-imgs"
 
-test_image = cv2.resize(test_image, (64, 64))
+if not os.path.exists(test_folder):
+    print(f"\nError: '{test_folder}' folder not found.")
+    exit()
 
-test_image = test_image.flatten()
+print("\nPredictions:\n")
 
-test_image = test_image.reshape(1, -1)
+image_found = False
 
-prediction = model.predict(test_image)
+for image_name in os.listdir(test_folder):
 
-print("\nPrediction")
+    image_path = os.path.join(test_folder, image_name)
 
-if prediction[0] == 0:
-    print("🐱 Cat")
-else:
-    print("🐶 Dog")
+    test_image = cv2.imread(image_path)
+
+    # Skip non-image files
+    if test_image is None:
+        continue
+
+    image_found = True
+
+    test_image = cv2.resize(test_image, (64, 64))
+    test_image = test_image.flatten()
+    test_image = test_image.reshape(1, -1)
+
+    prediction = model.predict(test_image)
+
+    if prediction[0] == 0:
+        print(f"{image_name} --> 🐱 Cat")
+    else:
+        print(f"{image_name} --> 🐶 Dog")
+
+if not image_found:
+    print("No valid images found inside the 'test-imgs' folder.")
