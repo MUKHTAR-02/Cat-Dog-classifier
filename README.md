@@ -254,12 +254,6 @@ For higher accuracy, Deep Learning models such as **Convolutional Neural Network
 
 ---
 
-# 📄 License
-
-This project is open-source and available under the MIT License.
-
----
-
 # 👨‍💻 Author
 
 Created for educational purposes to help students understand the complete Machine Learning Classification workflow from scratch.
